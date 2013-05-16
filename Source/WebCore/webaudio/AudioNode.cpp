@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2010, Google Inc. All rights reserved.
- * Copyright (c) 2012, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -211,34 +210,13 @@ void AudioNode::ref(RefType refType)
 {
     switch (refType) {
     case RefTypeNormal:
-        {
-#if USE(LOCKFREE_THREADSAFEREFCOUNTED)
-            atomicIncrement(&m_normalRefCount);
-#else
-            MutexLocker locker(m_mutex);
-            ++m_normalRefCount;
-#endif
-        }
+        atomicIncrement(&m_normalRefCount);
         break;
     case RefTypeConnection:
-        {
-#if USE(LOCKFREE_THREADSAFEREFCOUNTED)
-            atomicIncrement(&m_connectionRefCount);
-#else
-            MutexLocker locker(m_mutex);
-            ++m_connectionRefCount;
-#endif
-        }
+        atomicIncrement(&m_connectionRefCount);
         break;
     case RefTypeDisabled:
-        {
-#if USE(LOCKFREE_THREADSAFEREFCOUNTED)
-            atomicIncrement(&m_disabledRefCount);
-#else
-            MutexLocker locker(m_mutex);
-            ++m_disabledRefCount;
-#endif
-        }
+        atomicIncrement(&m_disabledRefCount);
         break;
     default:
         ASSERT_NOT_REACHED();
@@ -301,37 +279,16 @@ void AudioNode::finishDeref(RefType refType)
 
     switch (refType) {
     case RefTypeNormal:
-        {
-            ASSERT(m_normalRefCount > 0);
-#if USE(LOCKFREE_THREADSAFEREFCOUNTED)
-            atomicDecrement(&m_normalRefCount);
-#else
-            MutexLocker locker(m_mutex);
-            --m_normalRefCount;
-#endif
-        }
+        ASSERT(m_normalRefCount > 0);
+        atomicDecrement(&m_normalRefCount);
         break;
     case RefTypeConnection:
-        {
-            ASSERT(m_connectionRefCount > 0);
-#if USE(LOCKFREE_THREADSAFEREFCOUNTED)
-            atomicDecrement(&m_connectionRefCount);
-#else
-            MutexLocker locker(m_mutex);
-            --m_connectionRefCount;
-#endif
-        }
+        ASSERT(m_connectionRefCount > 0);
+        atomicDecrement(&m_connectionRefCount);
         break;
     case RefTypeDisabled:
-        {
-            ASSERT(m_disabledRefCount > 0);
-#if USE(LOCKFREE_THREADSAFEREFCOUNTED)
-            atomicDecrement(&m_disabledRefCount);
-#else
-            MutexLocker locker(m_mutex);
-            --m_disabledRefCount;
-#endif
-        }
+        ASSERT(m_disabledRefCount > 0);
+        atomicDecrement(&m_disabledRefCount);
         break;
     default:
         ASSERT_NOT_REACHED();
