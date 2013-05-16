@@ -35,15 +35,15 @@ class AudioParam;
 
 class DelayNode : public AudioBasicProcessorNode {
 public:
-    static PassRefPtr<DelayNode> create(AudioContext* context, float sampleRate)
+    static PassRefPtr<DelayNode> create(AudioContext* context, double sampleRate)
     {
-        return adoptRef(new DelayNode(context, sampleRate));
+        return adoptRef(new DelayNode(context, sampleRate));      
     }
 
     AudioParam* delayTime();
 
 private:
-    DelayNode(AudioContext*, float sampleRate);
+    DelayNode(AudioContext*, double sampleRate);
 
     DelayProcessor* delayProcessor() { return static_cast<DelayProcessor*>(processor()); }
 };

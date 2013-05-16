@@ -20,7 +20,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
 #ifndef JSAudioConstructor_h
@@ -36,26 +36,17 @@ namespace WebCore {
 
     class JSAudioConstructor : public DOMConstructorWithDocument {
     public:
-        typedef DOMConstructorWithDocument Base;
+        JSAudioConstructor(JSC::ExecState*, JSDOMGlobalObject*);
 
-        static JSAudioConstructor* create(JSC::ExecState* exec, JSC::Structure* structure, JSDOMGlobalObject* globalObject)
+        static JSC::Structure* createStructure(JSC::JSGlobalData& globalData, JSC::JSValue prototype)
         {
-            JSAudioConstructor* constructor = new (JSC::allocateCell<JSAudioConstructor>(*exec->heap())) JSAudioConstructor(structure, globalObject);
-            constructor->finishCreation(exec, globalObject);
-            return constructor;
-        }
-
-        static JSC::Structure* createStructure(JSC::JSGlobalData& globalData, JSC::JSGlobalObject* globalObject, JSC::JSValue prototype)
-        {
-            return JSC::Structure::create(globalData, globalObject, prototype, JSC::TypeInfo(JSC::ObjectType, StructureFlags), &s_info);
+            return JSC::Structure::create(globalData, prototype, JSC::TypeInfo(JSC::ObjectType, StructureFlags), AnonymousSlotCount, &s_info);
         }
 
         static const JSC::ClassInfo s_info;
 
     private:
-        JSAudioConstructor(JSC::Structure*, JSDOMGlobalObject*);
-        void finishCreation(JSC::ExecState*, JSDOMGlobalObject*);
-        static JSC::ConstructType getConstructData(JSC::JSCell*, JSC::ConstructData&);
+        virtual JSC::ConstructType getConstructData(JSC::ConstructData&);
     };
 
 } // namespace WebCore

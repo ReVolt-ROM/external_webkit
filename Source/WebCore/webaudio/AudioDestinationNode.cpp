@@ -32,18 +32,16 @@
 #include "AudioContext.h"
 #include "AudioNodeInput.h"
 #include "AudioNodeOutput.h"
-#include "AudioUtilities.h"
-#include "DenormalDisabler.h"
 
 namespace WebCore {
-
-AudioDestinationNode::AudioDestinationNode(AudioContext* context, float sampleRate)
+    
+AudioDestinationNode::AudioDestinationNode(AudioContext* context, double sampleRate)
     : AudioNode(context, sampleRate)
-    , m_currentSampleFrame(0)
+    , m_currentTime(0.0)
 {
     addInput(adoptPtr(new AudioNodeInput(this)));
-
-    setNodeType(NodeTypeDestination);
+    
+    setType(NodeTypeDestination);
 }
 
 AudioDestinationNode::~AudioDestinationNode()
@@ -54,13 +52,8 @@ AudioDestinationNode::~AudioDestinationNode()
 // The audio hardware calls us back here to gets its input stream.
 void AudioDestinationNode::provideInput(AudioBus* destinationBus, size_t numberOfFrames)
 {
-    // We don't want denormals slowing down any of the audio processing
-    // since they can very seriously hurt performance.
-    // This will take care of all AudioNodes because they all process within this scope.
-    DenormalDisabler denormalDisabler;
-
     context()->setAudioThread(currentThread());
-
+    
     if (!context()->isRunnable()) {
         destinationBus->zero();
         return;
@@ -72,7 +65,7 @@ void AudioDestinationNode::provideInput(AudioBus* destinationBus, size_t numberO
     // This will cause the node(s) connected to us to process, which in turn will pull on their input(s),
     // all the way backwards through the rendering graph.
     AudioBus* renderedBus = input(0)->pull(destinationBus, numberOfFrames);
-
+    
     if (!renderedBus)
         destinationBus->zero();
     else if (renderedBus != destinationBus) {
@@ -82,9 +75,9 @@ void AudioDestinationNode::provideInput(AudioBus* destinationBus, size_t numberO
 
     // Let the context take care of any business at the end of each render quantum.
     context()->handlePostRenderTasks();
-
-    // Advance current sample-frame.
-    m_currentSampleFrame += numberOfFrames;
+    
+    // Advance current time.
+    m_currentTime += numberOfFrames / sampleRate();
 }
 
 } // namespace WebCore

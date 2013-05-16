@@ -33,19 +33,18 @@
 #include "HRTFDatabaseLoader.h"
 
 #include "HRTFDatabase.h"
-#include <wtf/MainThread.h>
 
 namespace WebCore {
 
 // Singleton
 HRTFDatabaseLoader* HRTFDatabaseLoader::s_loader = 0;
 
-PassRefPtr<HRTFDatabaseLoader> HRTFDatabaseLoader::createAndLoadAsynchronouslyIfNecessary(float sampleRate)
+PassRefPtr<HRTFDatabaseLoader> HRTFDatabaseLoader::createAndLoadAsynchronouslyIfNecessary(double sampleRate)
 {
     ASSERT(isMainThread());
 
     RefPtr<HRTFDatabaseLoader> loader;
-
+    
     if (!s_loader) {
         // Lazily create and load.
         loader = adoptRef(new HRTFDatabaseLoader(sampleRate));
@@ -55,12 +54,14 @@ PassRefPtr<HRTFDatabaseLoader> HRTFDatabaseLoader::createAndLoadAsynchronouslyIf
         loader = s_loader;
         ASSERT(sampleRate == loader->databaseSampleRate());
     }
-
+    
     return loader;
 }
 
-HRTFDatabaseLoader::HRTFDatabaseLoader(float sampleRate)
-    : m_databaseLoaderThread(0)
+HRTFDatabaseLoader::HRTFDatabaseLoader(double sampleRate)
+    : m_hrtfDatabase(0)
+    , m_databaseLoaderThread(0)
+    , m_startedLoadingDatabase(false)
     , m_databaseSampleRate(sampleRate)
 {
     ASSERT(isMainThread());
@@ -70,9 +71,14 @@ HRTFDatabaseLoader::~HRTFDatabaseLoader()
 {
     ASSERT(isMainThread());
 
-    waitForLoaderThreadCompletion();
+    if (m_startedLoadingDatabase)
+        waitForThreadCompletion(m_databaseLoaderThread, 0);
+    
+    m_startedLoadingDatabase = false;
+    m_databaseLoaderThread = 0;
+    
     m_hrtfDatabase.clear();
-
+    
     // Clear out singleton.
     ASSERT(this == s_loader);
     s_loader = 0;
@@ -85,7 +91,7 @@ static void* databaseLoaderEntry(void* threadData)
     HRTFDatabaseLoader* loader = reinterpret_cast<HRTFDatabaseLoader*>(threadData);
     ASSERT(loader);
     loader->load();
-
+    
     return 0;
 }
 
@@ -101,11 +107,10 @@ void HRTFDatabaseLoader::load()
 void HRTFDatabaseLoader::loadAsynchronously()
 {
     ASSERT(isMainThread());
-
-    MutexLocker locker(m_threadLock);
-
-    if (!m_hrtfDatabase.get() && !m_databaseLoaderThread) {
+    
+    if (!m_hrtfDatabase.get() && !m_startedLoadingDatabase) {
         // Start the asynchronous database loading process.
+        m_startedLoadingDatabase = true;
         m_databaseLoaderThread = createThread(databaseLoaderEntry, this, "HRTF database loader");
     }
 }
@@ -115,21 +120,19 @@ bool HRTFDatabaseLoader::isLoaded() const
     return m_hrtfDatabase.get();
 }
 
+
 void HRTFDatabaseLoader::waitForLoaderThreadCompletion()
 {
-    MutexLocker locker(m_threadLock);
-
-    // waitForThreadCompletion() should not be called twice for the same thread.
-    if (m_databaseLoaderThread)
-        waitForThreadCompletion(m_databaseLoaderThread, 0);
-    m_databaseLoaderThread = 0;
+    ASSERT(!isMainThread());
+    ASSERT(m_databaseLoaderThread);
+    waitForThreadCompletion(m_databaseLoaderThread, 0);    
 }
 
 HRTFDatabase* HRTFDatabaseLoader::defaultHRTFDatabase()
 {
     if (!s_loader)
         return 0;
-
+    
     return s_loader->database();
 }
 

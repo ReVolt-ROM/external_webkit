@@ -31,12 +31,12 @@
 namespace WebCore {
 
 class AudioContext;
-
+    
 class AudioChannelSplitter : public AudioNode {
 public:
-    static PassRefPtr<AudioChannelSplitter> create(AudioContext* context, float sampleRate)
+    static PassRefPtr<AudioChannelSplitter> create(AudioContext* context, double sampleRate)
     {
-        return adoptRef(new AudioChannelSplitter(context, sampleRate));
+        return adoptRef(new AudioChannelSplitter(context, sampleRate));      
     }
 
     // AudioNode
@@ -44,7 +44,7 @@ public:
     virtual void reset();
 
 private:
-    AudioChannelSplitter(AudioContext*, float sampleRate);
+    AudioChannelSplitter(AudioContext*, double sampleRate);
 };
 
 } // namespace WebCore
